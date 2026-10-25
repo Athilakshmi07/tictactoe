@@ -1,4 +1,4 @@
-﻿using TicTacToe.Api.Models;
+using TicTacToe.Api.Models;
 
 namespace TicTacToe.Api.DTOs;
 
@@ -27,8 +27,9 @@ public class GameStateResponse
     public List<CellCoordinate> WinningCells { get; set; } = new();
     public List<MoveRecord> MoveHistory { get; set; } = new();
     public Scoreboard Scoreboard { get; set; } = new();
+    public List<RoundRecord> ScoreboardHistory { get; set; } = new();
 
-    public static GameStateResponse FromState(GameState state, Scoreboard scoreboard)
+    public static GameStateResponse FromState(GameState state, Scoreboard scoreboard, List<RoundRecord>? scoreboardHistory = null)
     {
         return new GameStateResponse
         {
@@ -46,7 +47,8 @@ public class GameStateResponse
                 XWins = scoreboard.XWins,
                 OWins = scoreboard.OWins,
                 Draws = scoreboard.Draws
-            }
+            },
+            ScoreboardHistory = scoreboardHistory != null ? new List<RoundRecord>(scoreboardHistory) : new List<RoundRecord>()
         };
     }
 }
@@ -57,4 +59,5 @@ public class ScoreboardResponse
     public int OWins { get; set; }
     public int Draws { get; set; }
     public int TotalGames => XWins + OWins + Draws;
+    public List<RoundRecord> History { get; set; } = new();
 }

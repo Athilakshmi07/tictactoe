@@ -1,8 +1,8 @@
-﻿import { Injectable, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { GameStateResponse, CreateGameRequest, MakeMoveRequest, ScoreboardResponse } from '../models/game.models';
+import { GameStateResponse, CreateGameRequest, MakeMoveRequest, ScoreboardResponse, RoundRecord } from '../models/game.models';
 
 @Injectable({
   providedIn: 'root'
@@ -45,6 +45,12 @@ export class TicTacToeService {
 
   getScoreboard(): Observable<ScoreboardResponse> {
     return this.http.get<ScoreboardResponse>(`${this.apiUrl}/scoreboard`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getScoreboardHistory(): Observable<RoundRecord[]> {
+    return this.http.get<RoundRecord[]>(`${this.apiUrl}/scoreboard/history`).pipe(
       catchError(this.handleError)
     );
   }

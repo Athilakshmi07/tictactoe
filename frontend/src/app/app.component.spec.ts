@@ -113,14 +113,14 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.scoreboard-row')).toBeTruthy();
+    expect(compiled.querySelector('.score-stack')).toBeTruthy();
   });
 
   it('should render the Move History panel', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.history-panel')).toBeTruthy();
+    expect(compiled.querySelector('.history-glass-box')).toBeTruthy();
   });
 
   it('should render the Undo Move button (initially disabled)', () => {

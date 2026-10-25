@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TicTacToe.Api.DTOs;
 using TicTacToe.Api.Services;
 
@@ -24,8 +24,9 @@ public class GamesController : ControllerBase
         var difficulty = request?.Difficulty;
         var game = _gameService.CreateGame(mode, difficulty);
         var scoreboard = _gameService.GetScoreboard();
+        var history = _gameService.GetScoreboardHistory();
         _logger.LogInformation("Created new game {GameId} with mode {Mode} and difficulty {Difficulty}", game.Id, game.Mode, game.Difficulty);
-        return CreatedAtAction(nameof(GetGame), new { id = game.Id }, GameStateResponse.FromState(game, scoreboard));
+        return CreatedAtAction(nameof(GetGame), new { id = game.Id }, GameStateResponse.FromState(game, scoreboard, history));
     }
 
     [HttpGet("{id:guid}")]
@@ -38,7 +39,8 @@ public class GamesController : ControllerBase
         }
 
         var scoreboard = _gameService.GetScoreboard();
-        return Ok(GameStateResponse.FromState(game, scoreboard));
+        var history = _gameService.GetScoreboardHistory();
+        return Ok(GameStateResponse.FromState(game, scoreboard, history));
     }
 
     [HttpPost("{id:guid}/moves")]
@@ -53,7 +55,8 @@ public class GamesController : ControllerBase
         {
             var game = _gameService.MakeMove(id, request.Player, request.Row, request.Column);
             var scoreboard = _gameService.GetScoreboard();
-            return Ok(GameStateResponse.FromState(game, scoreboard));
+            var history = _gameService.GetScoreboardHistory();
+            return Ok(GameStateResponse.FromState(game, scoreboard, history));
         }
         catch (KeyNotFoundException ex)
         {
@@ -80,7 +83,8 @@ public class GamesController : ControllerBase
         {
             var game = _gameService.UndoMove(id);
             var scoreboard = _gameService.GetScoreboard();
-            return Ok(GameStateResponse.FromState(game, scoreboard));
+            var history = _gameService.GetScoreboardHistory();
+            return Ok(GameStateResponse.FromState(game, scoreboard, history));
         }
         catch (KeyNotFoundException ex)
         {
@@ -99,7 +103,8 @@ public class GamesController : ControllerBase
         {
             var game = _gameService.ResetGame(id);
             var scoreboard = _gameService.GetScoreboard();
-            return Ok(GameStateResponse.FromState(game, scoreboard));
+            var history = _gameService.GetScoreboardHistory();
+            return Ok(GameStateResponse.FromState(game, scoreboard, history));
         }
         catch (KeyNotFoundException ex)
         {

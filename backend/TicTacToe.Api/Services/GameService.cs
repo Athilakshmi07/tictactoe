@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using TicTacToe.Api.Models;
 
 namespace TicTacToe.Api.Services;
@@ -12,6 +12,7 @@ public interface IGameService
     GameState ResetGame(Guid id);
     Scoreboard GetScoreboard();
     Scoreboard ResetScoreboard();
+    List<RoundRecord> GetScoreboardHistory();
 }
 
 public class GameService : IGameService
@@ -20,6 +21,7 @@ public class GameService : IGameService
     private readonly ConcurrentDictionary<Guid, GameState> _games = new();
     private readonly object _scoreboardLock = new();
     private readonly Scoreboard _scoreboard = new();
+    private readonly List<RoundRecord> _scoreboardHistory = new();
 
     public GameService(IGameEngine engine)
     {
@@ -288,6 +290,7 @@ public class GameService : IGameService
             _scoreboard.XWins = 0;
             _scoreboard.OWins = 0;
             _scoreboard.Draws = 0;
+            _scoreboardHistory.Clear();
 
             return new Scoreboard
             {
@@ -295,6 +298,24 @@ public class GameService : IGameService
                 OWins = 0,
                 Draws = 0
             };
+        }
+    }
+
+    public List<RoundRecord> GetScoreboardHistory()
+    {
+        lock (_scoreboardLock)
+        {
+            return _scoreboardHistory.Select(r => new RoundRecord
+            {
+                RoundNumber = r.RoundNumber,
+                GameId = r.GameId,
+                Mode = r.Mode,
+                Difficulty = r.Difficulty,
+                Status = r.Status,
+                Winner = r.Winner,
+                Moves = new List<MoveRecord>(r.Moves),
+                CompletedAt = r.CompletedAt
+            }).ToList();
         }
     }
 
@@ -321,6 +342,18 @@ public class GameService : IGameService
             {
                 _scoreboard.Draws++;
             }
+
+            _scoreboardHistory.Add(new RoundRecord
+            {
+                RoundNumber = _scoreboardHistory.Count + 1,
+                GameId = game.Id,
+                Mode = game.Mode,
+                Difficulty = game.Difficulty,
+                Status = game.Status,
+                Winner = game.Winner,
+                Moves = new List<MoveRecord>(game.MoveHistory),
+                CompletedAt = DateTime.UtcNow
+            });
 
             game.ScoreboardUpdated = true;
         }

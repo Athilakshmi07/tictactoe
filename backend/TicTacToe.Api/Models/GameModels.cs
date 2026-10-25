@@ -1,4 +1,4 @@
-﻿namespace TicTacToe.Api.Models;
+namespace TicTacToe.Api.Models;
 
 public static class GameConstants
 {
@@ -49,6 +49,18 @@ public class Scoreboard
     public int TotalGames => XWins + OWins + Draws;
 }
 
+public class RoundRecord
+{
+    public int RoundNumber { get; set; }
+    public Guid GameId { get; set; }
+    public string Mode { get; set; } = string.Empty;
+    public string Difficulty { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string? Winner { get; set; }
+    public List<MoveRecord> Moves { get; set; } = new();
+    public DateTime CompletedAt { get; set; } = DateTime.UtcNow;
+}
+
 public class GameState
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -69,3 +81,4 @@ public class GameState
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 }
+

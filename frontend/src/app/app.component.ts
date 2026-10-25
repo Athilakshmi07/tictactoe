@@ -1,8 +1,8 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TicTacToeService } from './services/tic-tac-toe.service';
 import { SoundService } from './services/sound.service';
-import { GameStateResponse } from './models/game.models';
+import { GameStateResponse, RoundRecord } from './models/game.models';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +22,31 @@ export class AppComponent implements OnInit {
   errorMessage: string | null = null;
   isApiConnected = true;
 
+  // History tab: 'current' or 'scoreboard'
+  activeHistoryTab: 'current' | 'scoreboard' = 'current';
+  scoreboardHistory: RoundRecord[] = [];
+  collapsedRounds = new Set<number>();
+
+  get totalSessionMoves(): number {
+    return this.scoreboardHistory.reduce((sum, r) => sum + r.moves.length, 0);
+  }
+
+  isRoundExpanded(roundNumber: number): boolean {
+    return !this.collapsedRounds.has(roundNumber);
+  }
+
+  toggleRound(roundNumber: number) {
+    if (this.collapsedRounds.has(roundNumber)) {
+      this.collapsedRounds.delete(roundNumber);
+    } else {
+      this.collapsedRounds.add(roundNumber);
+    }
+  }
+
+  setHistoryTab(tab: 'current' | 'scoreboard') {
+    this.activeHistoryTab = tab;
+  }
+
   // 24 procedural celebration confetti pieces
   confettiPieces = Array.from({ length: 24 }, (_, i) => ({
     id: i,
@@ -37,6 +62,13 @@ export class AppComponent implements OnInit {
     this.startNewGame(this.selectedMode, this.selectedDifficulty);
   }
 
+  private applyGameState(state: GameStateResponse) {
+    this.game = state;
+    if (state.scoreboardHistory) {
+      this.scoreboardHistory = state.scoreboardHistory;
+    }
+  }
+
   startNewGame(
     mode: 'TwoPlayer' | 'Computer' = this.selectedMode,
     difficulty: 'Unbeatable' | 'Standard' = this.selectedDifficulty
@@ -48,7 +80,7 @@ export class AppComponent implements OnInit {
 
     this.ticTacToeService.createGame(mode, difficulty).subscribe({
       next: (state) => {
-        this.game = state;
+        this.applyGameState(state);
         this.isLoading = false;
         this.isApiConnected = true;
         this.soundService.playReset();
@@ -79,7 +111,7 @@ export class AppComponent implements OnInit {
 
     this.ticTacToeService.makeMove(this.game.id, playerMakingMove, row, col).subscribe({
       next: (state) => {
-        this.game = state;
+        this.applyGameState(state);
         this.isLoading = false;
         this.isApiConnected = true;
 
@@ -106,7 +138,7 @@ export class AppComponent implements OnInit {
 
     this.ticTacToeService.undoMove(this.game.id).subscribe({
       next: (state) => {
-        this.game = state;
+        this.applyGameState(state);
         this.isLoading = false;
         this.isApiConnected = true;
         this.soundService.playUndo();
@@ -126,7 +158,7 @@ export class AppComponent implements OnInit {
 
     this.ticTacToeService.resetGame(this.game.id).subscribe({
       next: (state) => {
-        this.game = state;
+        this.applyGameState(state);
         this.isLoading = false;
         this.isApiConnected = true;
         this.soundService.playReset();
@@ -149,6 +181,8 @@ export class AppComponent implements OnInit {
         if (this.game) {
           this.game.scoreboard = scoreboardRes;
         }
+        this.scoreboardHistory = [];
+        this.collapsedRounds.clear();
         this.isLoading = false;
         this.isApiConnected = true;
         this.soundService.playReset();

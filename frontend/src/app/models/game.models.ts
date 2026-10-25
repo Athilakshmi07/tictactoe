@@ -1,4 +1,4 @@
-﻿export interface CellCoordinate {
+export interface CellCoordinate {
   row: number;
   column: number;
 }
@@ -19,6 +19,17 @@ export interface Scoreboard {
   totalGames?: number;
 }
 
+export interface RoundRecord {
+  roundNumber: number;
+  gameId: string;
+  mode: 'TwoPlayer' | 'Computer';
+  difficulty: 'Unbeatable' | 'Standard';
+  status: 'Won' | 'Draw';
+  winner: string | null;
+  moves: MoveRecord[];
+  completedAt: string;
+}
+
 export interface GameStateResponse {
   id: string;
   board: string[][];
@@ -30,6 +41,7 @@ export interface GameStateResponse {
   winningCells: CellCoordinate[];
   moveHistory: MoveRecord[];
   scoreboard: Scoreboard;
+  scoreboardHistory?: RoundRecord[];
 }
 
 export interface CreateGameRequest {
@@ -48,4 +60,5 @@ export interface ScoreboardResponse {
   oWins: number;
   draws: number;
   totalGames: number;
+  history?: RoundRecord[];
 }

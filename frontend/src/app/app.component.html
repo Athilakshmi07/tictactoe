@@ -1,4 +1,4 @@
-﻿<div class="app-container">
+<div class="app-container">
   <!-- Confetti Celebration Burst (active on victory) -->
   <div *ngIf="game?.status === 'Won'" class="confetti-overlay" aria-hidden="true">
     <div
@@ -36,7 +36,7 @@
       </div>
       <div class="brand-text">
         <h1 class="brand-title">TIC <span class="title-dot">•</span> TAC <span class="title-dot">•</span> TOE</h1>
-        <p class="brand-tagline">Angular 18 & .NET 8 Web API Local Engine</p>
+        <p class="brand-tagline">Angular 18 &amp; .NET 8 Web API Local Engine</p>
       </div>
     </div>
 
@@ -67,11 +67,13 @@
     <button class="toast-close" (click)="errorMessage = null" aria-label="Dismiss">✕</button>
   </div>
 
-  <main class="main-layout" *ngIf="game as g">
-    <!-- Left Column: Arena & Game Controls -->
-    <section class="arena-card">
-      <!-- Game Mode Selection Pill -->
-      <div class="mode-control-group">
+  <!-- 3-Column Game Layout -->
+  <div class="game-layout" *ngIf="game as g">
+
+    <!-- LEFT SIDEBAR: Controls & Scoreboard -->
+    <aside class="left-sidebar">
+      <!-- Game Mode Selection -->
+      <div class="sidebar-section">
         <span class="section-micro-label">SELECT OPPONENT</span>
         <div class="mode-pill-toggle">
           <button
@@ -94,7 +96,7 @@
           </button>
         </div>
 
-        <!-- AI Strength Selector (shown when Vs Computer is active) -->
+        <!-- AI Difficulty -->
         <div *ngIf="selectedMode === 'Computer'" class="difficulty-control-wrapper">
           <div class="difficulty-pill-toggle">
             <button
@@ -102,64 +104,104 @@
               class="diff-btn"
               [class.active]="selectedDifficulty === 'Unbeatable'"
               (click)="switchDifficulty('Unbeatable')"
-              title="Invincible Minimax AI — Impossible to defeat, plays optimal moves"
+              title="Invincible Minimax AI"
             >
               <span class="diff-icon">🧠</span>
-              <span>Master AI (Invincible)</span>
+              <span>Master AI</span>
             </button>
             <button
               id="diff-standard"
               class="diff-btn"
               [class.active]="selectedDifficulty === 'Standard'"
               (click)="switchDifficulty('Standard')"
-              title="Standard Heuristic AI — Follows rule priority"
+              title="Standard Heuristic AI"
             >
               <span class="diff-icon">🎯</span>
-              <span>Standard AI</span>
+              <span>Standard</span>
             </button>
           </div>
-          <p class="difficulty-hint" *ngIf="selectedDifficulty === 'Unbeatable'">
-            🔥 <strong>Master Mode Active</strong>: Uses full Minimax tree lookahead. The computer cannot be beaten!
-          </p>
         </div>
       </div>
 
-      <!-- Neon Glass Scoreboard -->
-      <div class="scoreboard-row" *ngIf="g.scoreboard as sb">
-        <!-- Player X Card -->
-        <div class="score-glass-card card-x">
-          <div class="score-card-glow"></div>
-          <div class="score-badge">
-            <span class="player-symbol-x">✕</span>
-            <span class="player-name">{{ g.mode === 'Computer' ? 'Human (X)' : 'Player X' }}</span>
+      <!-- Scoreboard (Vertical) -->
+      <div class="sidebar-section" *ngIf="g.scoreboard as sb">
+        <span class="section-micro-label">SCOREBOARD</span>
+        <div class="score-stack">
+          <div class="score-row card-x">
+            <div class="score-row-left">
+              <span class="player-symbol-x">✕</span>
+              <span class="score-row-name">{{ g.mode === 'Computer' ? 'Human (X)' : 'Player X' }}</span>
+            </div>
+            <span class="score-row-value">{{ sb.xWins }}</span>
           </div>
-          <div class="score-value">{{ sb.xWins }}</div>
-          <div class="score-stat-label">Victories</div>
-        </div>
-
-        <!-- Draws Card -->
-        <div class="score-glass-card card-draw">
-          <div class="score-card-glow"></div>
-          <div class="score-badge">
-            <span class="player-symbol-draw">═</span>
-            <span class="player-name">Draws</span>
+          <div class="score-row card-draw">
+            <div class="score-row-left">
+              <span class="player-symbol-draw">═</span>
+              <span class="score-row-name">Draws</span>
+            </div>
+            <span class="score-row-value">{{ sb.draws }}</span>
           </div>
-          <div class="score-value">{{ sb.draws }}</div>
-          <div class="score-stat-label">Tied Matches</div>
-        </div>
-
-        <!-- Player O Card -->
-        <div class="score-glass-card card-o">
-          <div class="score-card-glow"></div>
-          <div class="score-badge">
-            <span class="player-symbol-o">◯</span>
-            <span class="player-name">{{ g.mode === 'Computer' ? (g.difficulty === 'Unbeatable' ? 'Master AI (O)' : 'Computer (O)') : 'Player O' }}</span>
+          <div class="score-row card-o">
+            <div class="score-row-left">
+              <span class="player-symbol-o">◯</span>
+              <span class="score-row-name">{{ g.mode === 'Computer' ? (g.difficulty === 'Unbeatable' ? 'Master AI (O)' : 'Computer (O)') : 'Player O' }}</span>
+            </div>
+            <span class="score-row-value">{{ sb.oWins }}</span>
           </div>
-          <div class="score-value">{{ sb.oWins }}</div>
-          <div class="score-stat-label">Victories</div>
         </div>
       </div>
 
+      <!-- Control Buttons -->
+      <div class="sidebar-section">
+        <span class="section-micro-label">ACTIONS</span>
+        <div class="controls-stack">
+          <button
+            id="btn-undo-move"
+            class="action-btn btn-undo"
+            [disabled]="!canUndo() || isLoading"
+            (click)="undo()"
+            title="Roll back to previous valid game state"
+          >
+            <span class="btn-icon-spin">⟲</span>
+            <span class="btn-label">Undo Move</span>
+          </button>
+
+          <button
+            id="btn-reset-game"
+            class="action-btn btn-reset"
+            [disabled]="isLoading || (g.moveHistory.length === 0 && g.status === 'InProgress')"
+            (click)="resetCurrentGame()"
+            title="Clear board and start fresh game round"
+          >
+            <span class="btn-icon-rotate">🔄</span>
+            <span class="btn-label">Reset Game</span>
+          </button>
+
+          <button
+            id="btn-new-game"
+            class="action-btn btn-new"
+            [disabled]="isLoading"
+            (click)="startNewGame()"
+            title="Create a fresh session"
+          >
+            <span class="btn-icon-sparkle">✨</span>
+            <span class="btn-label">New Game</span>
+          </button>
+        </div>
+
+        <button
+          id="btn-reset-scoreboard"
+          class="link-btn-reset"
+          (click)="resetScoreboard()"
+          [disabled]="isLoading"
+        >
+          <span>Clear Scoreboard</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- CENTER: Status Banner + Board -->
+    <section class="center-panel">
       <!-- Turn & Game Outcome Banner -->
       <div class="state-banner" [ngClass]="g.status.toLowerCase()">
         <!-- In Progress Banner -->
@@ -175,7 +217,7 @@
               </span>
             </span>
             <span class="turn-sub">
-              {{ g.mode === 'Computer' ? (g.currentPlayer === 'X' ? 'Your turn to move' : 'Computer calculating move...') : 'Waiting for Player ' + g.currentPlayer }}
+              {{ g.mode === 'Computer' ? (g.currentPlayer === 'X' ? 'Your turn to move' : 'Computer calculating...') : 'Waiting for Player ' + g.currentPlayer }}
             </span>
           </div>
         </div>
@@ -203,7 +245,7 @@
         </div>
       </div>
 
-      <!-- 3x3 Cyber Board -->
+      <!-- 3×3 Cyber Board — Hero Element -->
       <div class="board-frame">
         <div class="board-grid" [class.game-locked]="g.status !== 'InProgress'">
           <ng-container *ngFor="let row of g.board; let r = index">
@@ -219,7 +261,6 @@
               (click)="onCellClick(r, c)"
               [attr.aria-label]="'Row ' + (r + 1) + ', Column ' + (c + 1) + (cell ? ': ' + cell : ': Empty')"
             >
-              <!-- Cell background glow sweep -->
               <span class="cell-hover-glow"></span>
 
               <!-- Animated SVG Mark X -->
@@ -233,7 +274,7 @@
                 <circle class="anim-circle" cx="30" cy="30" r="18" stroke="#ff007f" stroke-width="7" stroke-linecap="round" fill="none"/>
               </svg>
 
-              <!-- Ghost Mark on Hover (When Empty & In Progress) -->
+              <!-- Ghost Mark on Hover -->
               <div *ngIf="cell === '' && g.status === 'InProgress'" class="ghost-wrapper">
                 <span *ngIf="g.currentPlayer === 'X'" class="ghost-svg-x">✕</span>
                 <span *ngIf="g.currentPlayer === 'O'" class="ghost-svg-o">◯</span>
@@ -242,112 +283,159 @@
           </ng-container>
         </div>
       </div>
-
-      <!-- Controls & Quick Actions -->
-      <div class="controls-toolbar">
-        <button
-          id="btn-undo-move"
-          class="action-btn btn-undo"
-          [disabled]="!canUndo() || isLoading"
-          (click)="undo()"
-          title="Roll back to previous valid game state"
-        >
-          <span class="btn-icon-spin">⟲</span>
-          <span class="btn-label">Undo Move</span>
-        </button>
-
-        <button
-          id="btn-reset-game"
-          class="action-btn btn-reset"
-          [disabled]="isLoading || (g.moveHistory.length === 0 && g.status === 'InProgress')"
-          (click)="resetCurrentGame()"
-          title="Clear board and start fresh game round"
-        >
-          <span class="btn-icon-rotate">🔄</span>
-          <span class="btn-label">Reset Game</span>
-        </button>
-
-        <button
-          id="btn-new-game"
-          class="action-btn btn-new"
-          [disabled]="isLoading"
-          (click)="startNewGame()"
-          title="Create a fresh session"
-        >
-          <span class="btn-icon-sparkle">✨</span>
-          <span class="btn-label">New Game</span>
-        </button>
-      </div>
-
-      <!-- Scoreboard Reset Link -->
-      <div class="scoreboard-footer-link">
-        <button
-          id="btn-reset-scoreboard"
-          class="link-btn-reset"
-          (click)="resetScoreboard()"
-          [disabled]="isLoading"
-        >
-          <span>Clear Scoreboard History</span>
-        </button>
-      </div>
     </section>
 
-    <!-- Right Column: Move History Panel -->
-    <aside class="history-panel">
+    <!-- RIGHT SIDEBAR: Move History & Scoreboard Session Log -->
+    <aside class="right-sidebar">
       <div class="history-glass-box">
+        <!-- Header with View Tabs -->
         <div class="history-box-header">
-          <div class="history-title-wrapper">
-            <span class="history-badge-icon">📜</span>
-            <h2 class="history-box-title">Move History</h2>
+          <div class="history-tabs-pill">
+            <button
+              id="tab-current-round"
+              class="hist-tab-btn"
+              [class.active]="activeHistoryTab === 'current'"
+              (click)="setHistoryTab('current')"
+              title="View live moves for the ongoing round"
+            >
+              <span>Current</span>
+              <span class="tab-badge">{{ g.moveHistory.length }}</span>
+            </button>
+            <button
+              id="tab-scoreboard-history"
+              class="hist-tab-btn"
+              [class.active]="activeHistoryTab === 'scoreboard'"
+              (click)="setHistoryTab('scoreboard')"
+              title="View full history of moves preserved across rounds until scoreboard is cleared"
+            >
+              <span>Scoreboard Log</span>
+              <span class="tab-badge highlight">{{ scoreboardHistory.length }} Rds</span>
+            </button>
           </div>
-          <span class="move-counter-chip">
-            {{ g.moveHistory.length }} {{ g.moveHistory.length === 1 ? 'Move' : 'Moves' }}
-          </span>
         </div>
 
         <div class="history-box-body">
-          <!-- Empty State -->
-          <div *ngIf="g.moveHistory.length === 0" class="empty-feed">
-            <div class="empty-feed-graphic">
-              <span class="empty-icon-radar">🎯</span>
+          <!-- ================= TAB 1: CURRENT ROUND ================= -->
+          <ng-container *ngIf="activeHistoryTab === 'current'">
+            <!-- Empty State -->
+            <div *ngIf="g.moveHistory.length === 0" class="empty-feed">
+              <div class="empty-feed-graphic">
+                <span class="empty-icon-radar">🎯</span>
+              </div>
+              <h4 class="empty-feed-title">No moves logged</h4>
+              <p class="empty-feed-subtitle">Click any open tile on the board to make your initial move.</p>
             </div>
-            <h4 class="empty-feed-title">No moves logged</h4>
-            <p class="empty-feed-subtitle">Click any open tile on the board to make your initial move.</p>
-          </div>
 
-          <!-- Move Log Table -->
-          <div *ngIf="g.moveHistory.length > 0" class="history-table-wrapper">
-            <table class="cyber-table">
-              <thead>
-                <tr>
-                  <th class="col-index">#</th>
-                  <th class="col-player">Player</th>
-                  <th class="col-pos">Coordinate</th>
-                  <th class="col-time">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  *ngFor="let move of g.moveHistory"
-                  class="cyber-row"
-                  [class.latest-move]="isLatestMove(move.moveNumber)"
+            <!-- Move Log Table -->
+            <div *ngIf="g.moveHistory.length > 0" class="history-table-wrapper">
+              <table class="cyber-table">
+                <thead>
+                  <tr>
+                    <th class="col-index">#</th>
+                    <th class="col-player">Player</th>
+                    <th class="col-pos">Position</th>
+                    <th class="col-time">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    *ngFor="let move of g.moveHistory"
+                    class="cyber-row"
+                    [class.latest-move]="isLatestMove(move.moveNumber)"
+                  >
+                    <td class="col-index cell-index">{{ move.moveNumber }}</td>
+                    <td class="col-player">
+                      <span class="player-chip" [class.chip-x]="move.player === 'X'" [class.chip-o]="move.player === 'O'">
+                        {{ move.player }}
+                      </span>
+                    </td>
+                    <td class="col-pos cell-pos">
+                      <span class="pos-badge">{{ move.position }}</span>
+                    </td>
+                    <td class="col-time cell-time">{{ move.timestamp | date:'HH:mm:ss' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+
+          <!-- ================= TAB 2: SCOREBOARD SESSION HISTORY ================= -->
+          <ng-container *ngIf="activeHistoryTab === 'scoreboard'">
+            <!-- Empty State for Scoreboard History -->
+            <div *ngIf="scoreboardHistory.length === 0" class="empty-feed">
+              <div class="empty-feed-graphic">
+                <span class="empty-icon-radar">📜</span>
+              </div>
+              <h4 class="empty-feed-title">No completed rounds yet</h4>
+              <p class="empty-feed-subtitle">
+                Complete a round (win or draw) to store and inspect its moves here. Rounds remain stored until you click "Clear Scoreboard".
+              </p>
+            </div>
+
+            <!-- List of Rounds in Scoreboard History -->
+            <div *ngIf="scoreboardHistory.length > 0" class="scoreboard-rounds-container">
+              <div class="session-summary-bar">
+                <span class="summary-label">SESSION LOG:</span>
+                <span class="summary-stat">{{ scoreboardHistory.length }} {{ scoreboardHistory.length === 1 ? 'Round' : 'Rounds' }} • {{ totalSessionMoves }} Moves</span>
+              </div>
+
+              <div *ngFor="let round of scoreboardHistory" class="round-card">
+                <!-- Round Header Accordion -->
+                <button
+                  type="button"
+                  class="round-card-header"
+                  (click)="toggleRound(round.roundNumber)"
+                  [attr.aria-expanded]="isRoundExpanded(round.roundNumber)"
                 >
-                  <td class="col-index cell-index">{{ move.moveNumber }}</td>
-                  <td class="col-player">
-                    <span class="player-chip" [class.chip-x]="move.player === 'X'" [class.chip-o]="move.player === 'O'">
-                      {{ move.player }}
+                  <div class="round-meta-left">
+                    <span class="round-pill-number">R#{{ round.roundNumber }}</span>
+                    <span
+                      class="round-outcome-tag"
+                      [class.outcome-x]="round.winner === 'X'"
+                      [class.outcome-o]="round.winner === 'O'"
+                      [class.outcome-draw]="round.status === 'Draw'"
+                    >
+                      {{ round.status === 'Won' ? 'Winner ' + round.winner : 'Draw' }}
                     </span>
-                  </td>
-                  <td class="col-pos cell-pos">
-                    <span class="pos-badge">{{ move.position }}</span>
-                  </td>
-                  <td class="col-time cell-time">{{ move.timestamp | date:'HH:mm:ss' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  </div>
+                  <div class="round-meta-right">
+                    <span class="round-move-count">{{ round.moves.length }} moves</span>
+                    <span class="accordion-arrow">{{ isRoundExpanded(round.roundNumber) ? '▾' : '▸' }}</span>
+                  </div>
+                </button>
+
+                <!-- Round Moves Table (Expanded) -->
+                <div *ngIf="isRoundExpanded(round.roundNumber)" class="round-moves-wrapper">
+                  <table class="cyber-table table-mini">
+                    <thead>
+                      <tr>
+                        <th class="col-index">#</th>
+                        <th class="col-player">Player</th>
+                        <th class="col-pos">Position</th>
+                        <th class="col-time">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let m of round.moves" class="cyber-row">
+                        <td class="col-index cell-index">{{ m.moveNumber }}</td>
+                        <td class="col-player">
+                          <span class="player-chip chip-mini" [class.chip-x]="m.player === 'X'" [class.chip-o]="m.player === 'O'">
+                            {{ m.player }}
+                          </span>
+                        </td>
+                        <td class="col-pos cell-pos">
+                          <span class="pos-badge">{{ m.position }}</span>
+                        </td>
+                        <td class="col-time cell-time">{{ m.timestamp | date:'HH:mm:ss' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </ng-container>
         </div>
       </div>
     </aside>
-  </main>
+  </div>
 </div>

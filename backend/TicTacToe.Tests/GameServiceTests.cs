@@ -1,4 +1,4 @@
-﻿using TicTacToe.Api.Models;
+using TicTacToe.Api.Models;
 using TicTacToe.Api.Services;
 using Xunit;
 
@@ -278,5 +278,48 @@ public class GameServiceTests
         Assert.Equal(0, resetScore.OWins);
         Assert.Equal(0, resetScore.Draws);
         Assert.Equal(0, resetScore.TotalGames);
+    }
+
+    [Fact]
+    public void ScoreboardHistory_TracksMovesAcrossRoundsUntilScoreboardReset()
+    {
+        // Round 1: X wins
+        var game1 = _service.CreateGame(GameConstants.ModeTwoPlayer);
+        _service.MakeMove(game1.Id, "X", 0, 0);
+        _service.MakeMove(game1.Id, "O", 1, 0);
+        _service.MakeMove(game1.Id, "X", 0, 1);
+        _service.MakeMove(game1.Id, "O", 1, 1);
+        _service.MakeMove(game1.Id, "X", 0, 2); // X wins
+
+        var historyAfterRound1 = _service.GetScoreboardHistory();
+        Assert.Single(historyAfterRound1);
+        Assert.Equal(1, historyAfterRound1[0].RoundNumber);
+        Assert.Equal("Won", historyAfterRound1[0].Status);
+        Assert.Equal("X", historyAfterRound1[0].Winner);
+        Assert.Equal(5, historyAfterRound1[0].Moves.Count);
+
+        // Reset the game to start Round 2 - round 1 moves remain in scoreboard history!
+        var game2 = _service.ResetGame(game1.Id);
+        Assert.Empty(game2.MoveHistory); // Current game moves cleared
+        Assert.Single(_service.GetScoreboardHistory()); // Scoreboard history preserved!
+
+        // Round 2: O wins
+        _service.MakeMove(game2.Id, "X", 1, 0);
+        _service.MakeMove(game2.Id, "O", 0, 0);
+        _service.MakeMove(game2.Id, "X", 2, 0);
+        _service.MakeMove(game2.Id, "O", 0, 1);
+        _service.MakeMove(game2.Id, "X", 1, 1);
+        _service.MakeMove(game2.Id, "O", 0, 2); // O wins
+
+        var historyAfterRound2 = _service.GetScoreboardHistory();
+        Assert.Equal(2, historyAfterRound2.Count);
+        Assert.Equal(2, historyAfterRound2[1].RoundNumber);
+        Assert.Equal("O", historyAfterRound2[1].Winner);
+        Assert.Equal(6, historyAfterRound2[1].Moves.Count);
+
+        // Clear Scoreboard resets history
+        _service.ResetScoreboard();
+        var historyAfterClear = _service.GetScoreboardHistory();
+        Assert.Empty(historyAfterClear);
     }
 }

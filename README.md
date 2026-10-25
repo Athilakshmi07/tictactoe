@@ -1,4 +1,4 @@
-﻿# 🎮 Tic Tac Toe - Full Stack Web Application
+# 🎮 Tic Tac Toe - Full Stack Web Application
 
 A browser-based Tic Tac Toe application built with an **Angular** frontend and a **.NET 8 Web API** backend running locally. Supports two-player local multiplayer, smart AI computer opponent mode, move history tracking, undo functionality, and a session-level scoreboard.
 
@@ -44,6 +44,7 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
 - **State Storage**: In-Memory Thread-Safe Service (`ConcurrentDictionary` and synchronization primitives)
 - **API Documentation**: OpenAPI / Swagger UI
 - **Testing**: xUnit with 28 comprehensive unit tests covering all rules, validations, and edge cases
+  - Frontend: Jasmine & Karma with 16 component and integration tests
 
 ---
 
@@ -235,6 +236,21 @@ Run frontend unit tests using headless Chrome:
 cd frontend
 npm test -- --watch=false --browsers=ChromeHeadless
 ```
+**Frontend Test Coverage Includes (16 tests):**
+- Component creation and rendering
+- All 9 board cells rendered correctly
+- Scoreboard panel rendered
+- Move History panel rendered
+- Undo Move button rendered (disabled initially with no moves)
+- Reset Game button rendered
+- Reset Scoreboard button rendered
+- Mode switching to Computer mode (API call verified)
+- Cell click triggers `makeMove` API call
+- Reset Game triggers `resetGame` API call
+- Reset Scoreboard triggers `resetScoreboard` API call
+- `canUndo()` returns false with no moves
+- Winning cells correctly identified via `isWinningCell()`
+- Latest move correctly identified via `isLatestMove()`
 
 ---
 
@@ -290,6 +306,6 @@ npm test -- --watch=false --browsers=ChromeHeadless
 
 - **Database Persistence**: Integrate SQLite or PostgreSQL via Entity Framework Core to persist games, user accounts, and historical match stats across server restarts.
 - **Real-Time Multiplayer**: Introduce SignalR (WebSockets) for remote head-to-head multiplayer across different browser windows or devices.
-- **Difficulty Settings**: Add selectable AI difficulty levels (e.g., Easy/Random, Medium/Heuristic, and Hard/Minimax algorithm).
 - **Expandable Board Dimensions**: Support 4×4 or 5×5 grid variants with customizable win lengths (e.g., Connect 4 style).
+- **User Accounts & History**: Allow players to register and track their full match history over time.
 

@@ -43,16 +43,16 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
 - **API Style**: RESTful JSON API
 - **State Storage**: In-Memory Thread-Safe Service (`ConcurrentDictionary` and synchronization primitives)
 - **API Documentation**: OpenAPI / Swagger UI
-- **Testing**: xUnit with 28 comprehensive unit tests covering all rules, validations, and edge cases
+- **Testing**: xUnit with 31 comprehensive unit tests covering all rules, validations, edge cases, and scoreboard session history
   - Frontend: Jasmine & Karma with 16 component and integration tests
 
 ---
 
 ## 3. Features Implemented
 
-### 🎯 Core Gameplay
-- **Standard 3×3 Board**: Interactive grid with cells that display `X` or `O`. Empty cells feature ghost hover indicators.
-- **Turn Alternation**: Alternates turns between Player X and Player O. Displays active turn status with animated pulsing ring.
+### 🎯 Core Gameplay & Layout
+- **Prominent Centered 3×3 Board**: Clean 3-column layout featuring the game board as the centered hero element, controls/scoreboard on the left, and move history on the right.
+- **Turn Alternation**: Alternates turns between Player X and Player O. Displays active turn status with animated pulsing ring and turn indicator.
 - **Validation**: Rejects invalid moves (out of bounds, cell already occupied, wrong player's turn, moves after game completion).
 - **Win Detection**: Automatically checks all 3 rows, 3 columns, and 2 diagonals. When a win occurs:
   - Highlights the 3 winning cells with an animated emerald pulse.
@@ -65,20 +65,20 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
 - Selectable game modes: **Two Player Mode** and **Vs Computer Mode**.
 - In Computer Mode, players can toggle between two AI engine levels:
   - 🧠 **Master AI (Invincible Minimax)**: Evaluates the complete game-state search tree with recursive depth evaluation. Mathematically guaranteed **never to lose** — will always seize winning opportunities or force a draw against perfect play!
-  - 🎯 **Standard AI (Heuristic)**: Follows the original 5-tier rule priority specification.
-- Selectable game modes: **Two Player Mode** and **Vs Computer Mode**.
-- In Computer Mode:
-  - Human player controls **X**; Computer automatically controls **O**.
-  - Computer automatically calculates and executes its move immediately following the human's move.
-  - Move selection follows strict strategic priority:
+  - 🎯 **Standard AI (Heuristic)**: Follows the original 5-tier rule priority specification:
     1. **Win**: If O can win in this move, take the winning cell.
     2. **Block**: If X can win on the next move, block X's winning cell.
     3. **Center**: Take center cell `(1, 1)` if available.
     4. **Corner**: Take an available corner cell (`(0,0)`, `(0,2)`, `(2,0)`, `(2,2)`).
     5. **Any**: Take any remaining available edge cell (`(0,1)`, `(1,0)`, `(1,2)`, `(2,1)`).
+- Human player controls **X**; Computer automatically controls **O**.
+- Computer automatically calculates and executes its move immediately following the human's move.
 
-### 📜 Move History & Undo
-- **Move History**: Real-time table logging Move #, Player, Position (e.g. `Row 1, Column 1`), and timestamp.
+### 📜 Move History & Scoreboard Session Log
+- **Dual-View Move Log**:
+  - **Current Round Tab**: Real-time table logging Move #, Player chip, Position (`Row 1, Column 1`), and timestamp for the active game.
+  - **Scoreboard Log Tab**: Preserves the complete move histories of all rounds completed in the current scoreboard session. Each round card displays the outcome (`Winner X`, `Winner O`, or `Draw`), move count, and an expandable table of all moves.
+  - **Session-Wide Preservation**: Resetting or creating new rounds clears the active grid while retaining all past rounds in the Scoreboard Log. The log is only cleared when the user explicitly clicks **Clear Scoreboard**.
 - **Undo Last Move**:
   - **Two Player Mode**: Undoes only the most recent move and restores the previous player's turn.
   - **Computer Mode**: Undoes both the computer's move and the player's previous move together, restoring Player X's turn.
@@ -88,8 +88,8 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
 ### 🏆 Scoreboard
 - Tracks session-level stats: **Player X Wins**, **Player O Wins**, **Draws**, and Total Games.
 - Updates once upon game completion.
-- **Reset Game**: Clears the board, moves, and win status while preserving the scoreboard.
-- **Reset Scoreboard**: Dedicated button to reset win/draw tallies to zero.
+- **Reset Game**: Clears the active board and active round moves while preserving the scoreboard and past session logs.
+- **Reset Scoreboard**: Dedicated button to reset win/draw tallies to zero and clear the scoreboard session history log.
 
 ### 🔊 Audio & UX Polish
 - Dynamic synthesizer sounds for moves, wins, draws, undos, and resets.
@@ -149,13 +149,14 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
 
 | Method | Endpoint | Description | Request Body | Response |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/api/games` | Creates a new game session | `{ "mode": "TwoPlayer" \| "Computer" }` | `GameStateResponse` |
+| `POST` | `/api/games` | Creates a new game session | `{ "mode": "TwoPlayer" \| "Computer", "difficulty": "Unbeatable" \| "Standard" }` | `GameStateResponse` |
 | `GET` | `/api/games/{id}` | Fetches current game state | *None* | `GameStateResponse` |
 | `POST` | `/api/games/{id}/moves` | Submits a player move | `{ "player": "X", "row": 0, "column": 0 }` | `GameStateResponse` |
 | `POST` | `/api/games/{id}/undo` | Undoes the last move / pair | *None* | `GameStateResponse` |
-| `POST` | `/api/games/{id}/reset` | Resets current board & history | *None* | `GameStateResponse` |
-| `GET` | `/api/scoreboard` | Retrieves scoreboard counts | *None* | `ScoreboardResponse` |
-| `POST` | `/api/scoreboard/reset` | Resets scoreboard to zero | *None* | `ScoreboardResponse` |
+| `POST` | `/api/games/{id}/reset` | Resets current board & active round | *None* | `GameStateResponse` |
+| `GET` | `/api/scoreboard` | Retrieves scoreboard counts & history | *None* | `ScoreboardResponse` |
+| `POST` | `/api/scoreboard/reset` | Resets scoreboard & clears session log | *None* | `ScoreboardResponse` |
+| `GET` | `/api/scoreboard/history` | Retrieves full session rounds & moves | *None* | `List<RoundRecord>` |
 
 ### Sample `GameStateResponse` Payload
 ```json
@@ -168,6 +169,7 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
   ],
   "currentPlayer": "O",
   "mode": "TwoPlayer",
+  "difficulty": "Unbeatable",
   "status": "InProgress",
   "winner": null,
   "winningCells": [],
@@ -202,7 +204,19 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
     "oWins": 0,
     "draws": 0,
     "totalGames": 1
-  }
+  },
+  "scoreboardHistory": [
+    {
+      "roundNumber": 1,
+      "gameId": "2c62c074-9447-49d9-bb4f-956ec94d80a1",
+      "mode": "TwoPlayer",
+      "difficulty": "Unbeatable",
+      "status": "Won",
+      "winner": "X",
+      "moves": [ ... ],
+      "completedAt": "2026-10-24T17:58:30Z"
+    }
+  ]
 }
 ```
 
@@ -211,7 +225,7 @@ This project is an enterprise-grade full-stack implementation of the classic Tic
 ## 7. How to Run Tests
 
 ### Backend Unit Tests (xUnit)
-Run all 28 backend unit tests from the repository root:
+Run all 31 backend unit tests from the repository root:
 ```bash
 dotnet test backend/TicTacToe.Tests/TicTacToe.Tests.csproj
 ```
@@ -223,6 +237,8 @@ dotnet test backend/TicTacToe.Tests/TicTacToe.Tests.csproj
 - Winning coordinate calculation
 - Draw detection upon full board
 - Reset game behavior (preserves scoreboard)
+- Scoreboard history retention across game resets
+- Scoreboard history wipe upon scoreboard reset
 - Two-player undo (single move rollback)
 - Computer mode undo (two-move atomic rollback)
 - Undo guard on completed games (Option A)
